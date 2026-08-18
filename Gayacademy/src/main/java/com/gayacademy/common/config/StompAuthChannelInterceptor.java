@@ -15,8 +15,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 /**
- * Interceptor de canal STOMP que valida o Bearer JWT no frame CONNECT (CHT-API-01).
- * O principal definido aqui fica disponível nos @MessageMapping via {@link java.security.Principal}.
+ * Interceptor de canal STOMP que valida o Bearer JWT no frame CONNECT 
+ * (CHT-API-01).
+ * O principal definido aqui fica disponível nos @MessageMapping via
+ *  {@link java.security.Principal}.
  */
 @Component
 @RequiredArgsConstructor

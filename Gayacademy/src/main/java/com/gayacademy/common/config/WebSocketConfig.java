@@ -30,7 +30,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry
                 .addEndpoint("/ws/chat")          // CHT-API-01
-                .setAllowedOriginPatterns("*")    // ajustar em produção
+                .setAllowedOriginPatterns("*")    // -ajustar em produção
                 .withSockJS();                    // fallback para ambientes sem WebSocket nativo
     }
 
@@ -46,6 +46,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // Para multi-instância com RabbitMQ STOMP relay, substituir por:
         //   registry.enableStompBrokerRelay("/topic", "/queue")
         //           .setRelayHost(...).setRelayPort(61613)...
+        //topic é geral e queue é para user -> user (dm)
         registry.enableSimpleBroker("/topic", "/queue");
     }
 

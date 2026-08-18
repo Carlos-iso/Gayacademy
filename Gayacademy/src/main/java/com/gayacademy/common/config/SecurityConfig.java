@@ -1,5 +1,6 @@
 package com.gayacademy.common.config;
 
+import com.gayacademy.feed.config.UserRateLimitFilter;
 import com.gayacademy.user.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +22,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+    private final UserRateLimitFilter userRateLimitFilter;
 
     private static final String[] PUBLIC_URLS = {
             "/api/v1/auth/**",
@@ -43,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers("/ws/chat/**").permitAll()  // auth feita no STOMP CONNECT
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(userRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

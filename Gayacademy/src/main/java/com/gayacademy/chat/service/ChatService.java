@@ -53,6 +53,8 @@ public class ChatService {
      * docker run -d --name mongo-teste -p 27017:27017 mongo
      * 
      */
+    //envia para apenas 1 user
+
     @Transactional
     public AckResponse enviarMensagem(UUID remetenteId, ChatRequest request) {
         // Idempotência — ignora duplicata em até 1 segundo (INT-02)
@@ -99,6 +101,7 @@ public class ChatService {
 
         // Entrega ao destinatário via STOMP
         MessageResponse payload = MessageResponse.from(message, remetente.getNomeExibicao());
+
         messagingTemplate.convertAndSendToUser(
                 request.destinatarioId().toString(),
                 "/queue/mensagens",
@@ -174,7 +177,12 @@ public class ChatService {
     public List<ChatResponse> listarConversas(UUID userId) {
         return conversaRepository.findByParticipante(userId).stream()
                 .map(c -> {
-                    UUID outroId = c.getUser1Id().equals(userId) ? c.getUser2Id() : c.getUser1Id();
+
+Set<UUID> outroId = c.findAllById(userId).stream().map(user ->{
+        return user.getUser1Id
+});
+
+                 //   UUID outroId = c.getUser1Id().equals(userId) ? c.getUser2Id() : c.getUser1Id();
                     String nome = userRepository.findById(outroId)
                             .map(User::getNomeExibicao)
                             .orElse("Usuário removido");
