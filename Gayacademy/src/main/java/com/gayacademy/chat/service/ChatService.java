@@ -22,8 +22,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -152,6 +160,7 @@ public class ChatService {
         String conversaId = buildConversaId(userId, destinatarioId);
 
         List<Message> mensagens;
+
         if (antesDeMessageId == null || antesDeMessageId.isBlank()) {
             mensagens = messageRepository.findByConversaIdOrderByCreatedAtDesc(
                     conversaId, PageRequest.of(0, pageSize));
@@ -161,34 +170,50 @@ public class ChatService {
         }
 
         // Carrega nomes dos remetentes evitando N+1
-        return mensagens.stream()
-                .map(m -> {
-                    String nome = userRepository.findById(m.getRemetenteId())
-                            .map(User::getNomeExibicao)
-                            .orElse("Usuário removido");
-                    return MessageResponse.from(m, nome);
-                })
-                .toList();
+        Set<UUID> idsUsers = mensagens.stream()
+                .map(Message::getRemetenteId)
+                .collect(Collectors.toSet());
+
+        Map<UUID, String> userMap = userRepository.findAllById(idsUsers)
+                .stream()
+                .collect(Collectors.toMap(User::getId, User::getNomeExibicao));
+
+        List<MessageResponse> mensResp = new ArrayList<>();
+        mensagens.forEach(m -> {
+            String nome = userMap.get(m.getRemetenteId());
+            if (nome != null && !nome.isBlank()) {
+                mensResp.add(MessageResponse.from(m, nome));
+            } else {
+                mensResp.add(MessageResponse.from(m, "Usuario removido"));
+            }
+        });
+
+        return mensResp;
+
     }
 
     /**
      * Lista conversas do inbox do usuário (CHT-API-05).
      */
     public List<ChatResponse> listarConversas(UUID userId) {
-        return conversaRepository.findByParticipante(userId).stream()
-                .map(c -> {
+     List<Conversa> conversas = conversaRepository.findByParticipante(userId);
 
-Set<UUID> outroId = c.findAllById(userId).stream().map(user ->{
-        return user.getUser1Id
-});
+    Set<UUID> outrosIds = conversas.stream()
+        .map(c -> c.getUser1Id().equals(userId) ? c.getUser2Id() : c.getUser1Id())
+        .collect(Collectors.toSet());
 
-                 //   UUID outroId = c.getUser1Id().equals(userId) ? c.getUser2Id() : c.getUser1Id();
-                    String nome = userRepository.findById(outroId)
-                            .map(User::getNomeExibicao)
-                            .orElse("Usuário removido");
-                    return ChatResponse.from(c, userId, nome);
-                })
-                .toList();
+    Map<UUID, String> nomesPorId = userRepository.findAllById(outrosIds).stream()
+        .collect(Collectors.toMap(User::getId, User::getNomeExibicao));
+
+    return conversas.stream()
+        .map(c -> {
+            UUID outroId = c.getUser1Id().equals(userId) ? c.getUser2Id() : c.getUser1Id();
+            String nome = nomesPorId.getOrDefault(outroId, "Usuário removido");
+            return ChatResponse.from(c, outroId, nome);
+        })
+        .toList();
+
+
     }
 
     /**

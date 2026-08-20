@@ -5,8 +5,11 @@ import java.util.UUID;
 
 public record FeedItemResponse(
         UUID postId,
+
         UUID authorId,
+
         String authorName,
+        
         String text,
         OffsetDateTime createdAt,
         long likes,

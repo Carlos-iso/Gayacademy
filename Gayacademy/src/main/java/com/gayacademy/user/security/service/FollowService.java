@@ -108,9 +108,8 @@ public class FollowService {
 
     @Transactional(readOnly = true)
     public List<FollowRequestResponse> listarPedidosRecebidos(UUID meuId) {
-        return followRequestRepository.findAll().stream()
-                .filter(fr -> fr.getTargetId().equals(meuId)
-                        && fr.getStatus() == FollowRequestStatus.PENDENTE)
+        return followRequestRepository.findByTargetIdAndStatus(meuId, FollowRequestStatus.PENDENTE)
+                .stream()
                 .map(fr -> {
                     User requester = userRepository.findById(fr.getRequesterId())
                             .orElseThrow(() -> new NotFoundException("Solicitante nao encontrado"));

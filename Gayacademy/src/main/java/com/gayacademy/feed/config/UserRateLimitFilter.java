@@ -48,7 +48,7 @@ public class UserRateLimitFilter extends OncePerRequestFilter {
         }
 
         if (count != null && count > MAX_REQUESTS_PER_MINUTE) {
-            response.setStatus(HttpServletResponse.SC_TOO_MANY_REQUESTS);
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             response.getWriter().write("{\"message\":\"Muitas tentativas de interação no feed. Tente novamente em instantes.\"}");

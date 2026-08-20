@@ -47,7 +47,7 @@ return commentRepository.findFirstPage(idPost, limiteCinco);
 //salvar no bd um comentario
 @Transactional
 public Boolean saveComment(Comentario comment){
-    if("null".equals(comment.getText())||
+    if(comment.getText() == null ||
     comment.getText().isBlank()|| 
 comment.getCreatedAt()==null||
 comment.getPost()==null||

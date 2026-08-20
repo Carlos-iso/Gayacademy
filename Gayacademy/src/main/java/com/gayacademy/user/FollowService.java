@@ -18,8 +18,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -108,15 +114,44 @@ public class FollowService {
 
     @Transactional(readOnly = true)
     public List<FollowRequestResponse> listarPedidosRecebidos(UUID meuId) {
-        return followRequestRepository.findAll().stream()
+Set<UUID>idsRequester = new HashSet<>();
+
+List<FollowRequestResponse> requestResponsesList = new ArrayList<>();
+        Map<FollowRequest, UUID> follows = followRequestRepository.findAll().stream()
                 .filter(fr -> fr.getTargetId().equals(meuId)
                         && fr.getStatus() == FollowRequestStatus.PENDENTE)
-                .map(fr -> {
-                    User requester = userRepository.findById(fr.getRequesterId())
-                            .orElseThrow(() -> new NotFoundException("Solicitante nao encontrado"));
-                    return FollowRequestResponse.from(fr, requester);
-                })
-                .toList();
+               .collect(Collectors.toMap(
+                flr -> flr, 
+                FollowRequest::getRequesterId
+            ));
+
+            follows.forEach((flr, id)->{
+             idsRequester.add(id);
+            });
+
+          Map<UUID,String> requesters = userRepository.findAllById(idsRequester)
+          .stream().collect(
+                Collectors.toMap(
+                    u->u.getId(),
+                     u->u.getNomeExibicao()));
+
+            follows.forEach((fl,id)->{
+              String nome=  requesters.get(id);
+              String nomeC = nome.isBlank() ? "Usuario removido" : nome;
+
+              FollowRequestResponse fldto = new FollowRequestResponse(
+fl.getId(),
+null,
+null,
+nomeC,
+null,
+null
+              );
+
+              requestResponsesList.add(fldto);
+
+            });
+               return requestResponsesList;
     }
 
     @Transactional

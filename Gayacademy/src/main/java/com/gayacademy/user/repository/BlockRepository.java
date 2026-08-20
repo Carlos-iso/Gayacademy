@@ -16,9 +16,9 @@ public interface BlockRepository extends JpaRepository<Block, BlockId> {
      * Verifica se há bloqueio em qualquer direção entre dois usuários.
      */
     @org.springframework.data.jpa.repository.Query("""
-           SELECT COUNT(b) > 0 FROM Block b
-           WHERE (b.blockerId = :a AND b.blockedId = :b)
-              OR (b.blockerId = :b AND b.blockedId = :a)
+           SELECT COUNT(bl) > 0 FROM Block bl
+           WHERE (bl.blockerId = :a AND bl.blockedId = :b)
+              OR (bl.blockerId = :b AND bl.blockedId = :a)
            """)
     boolean existsBlockBetween(
             @org.springframework.data.repository.query.Param("a") UUID a,

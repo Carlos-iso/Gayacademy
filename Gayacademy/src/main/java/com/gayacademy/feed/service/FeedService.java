@@ -18,8 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,25 +42,70 @@ public class FeedService {
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
 
         List<FeedItemResponse> items = new ArrayList<>();
-        var posts = postRepository.findAll(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
 
+        var posts = postRepository.findAll(PageRequest.of(
+                page,
+                 size,
+                  Sort.by(Sort.Direction.DESC, "createdAt")));
+                  //set com os likes para verificar se tem like do currentuser
+ 
+
+//lista dos likes obtidos a partir dos posts
+Set<Like> likesSet = posts.stream().flatMap(post -> post.getLikes().stream())
+.collect(Collectors.toSet());
+
+// IDs dos posts que o usuário atual curtiu
+Set<UUID> likedPostIds = likesSet.stream()
+        .filter(l -> l.getUser().getId().equals(currentUserId))
+        .map(l -> l.getPost().getIdPost())
+        .collect(Collectors.toSet());
+
+List<Post> listaPosts = new ArrayList<>();
+posts.forEach(p ->{
+        listaPosts.add(p);
+});
+
+//id post e likes totais
+Map<UUID, Long> likesTotaisMap = likeRepository.countLikesPerPost(listaPosts);
+
+listaPosts.forEach(p ->{
+
+items.add(new FeedItemResponse(
+        p.getIdPost(),
+        p.getUser().getId(),
+        p.getUser().getNomeExibicao(),
+        p.getText(),
+        p.getCreatedAt(),
+        likesTotaisMap.getOrDefault(p.getIdPost(), 0L),
+        likedPostIds.contains(p.getIdPost())
+));
+
+}); 
+
+return new FeedPageResponse(items, page, size, posts.hasNext(), false);
+/* 
         for (Post post : posts.getContent()) {
-            boolean likedByCurrentUser = likeRepository.existsByUserAndPostAndTargetType(user, post, LikeTargetType.POST);
+            boolean likedByCurrentUser = likeRepository.existsByUserAndPostAndTargetType(
+                user,
+                 post,
+                  LikeTargetType.POST);
             long totalLikes = likeRepository.countByPostAndTargetType(post, LikeTargetType.POST);
             String authorName = post.getUser() == null ? "" : post.getUser().getNomeExibicao();
 
             items.add(new FeedItemResponse(
-                    post.getIdPost(),
-                    post.getUser() == null ? null : post.getUser().getId(),
-                    authorName,
-                    post.getText(),
-                    post.getCreatedAt(),
-                    totalLikes,
-                    likedByCurrentUser
+                    post.getIdPost(),x
+                    post.getUser() == null ? null : post.getUser().getId(),x
+
+                    authorName, verificar se é null
+                    post.getText(),x
+                    post.getCreatedAt(),x
+                    totalLikes, x
+                    likedByCurrentUser x 
             ));
         }
 
         return new FeedPageResponse(items, page, size, posts.hasNext(), false);
+        */
     }
 
     @Transactional
